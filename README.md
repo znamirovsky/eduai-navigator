@@ -2,7 +2,8 @@
 
 ![EduAI Navigator Preview](assets/preview.png)
 
-> 🏆 **1st Place Winner – Regional Round of the AI Olympiad 2026 (Karlovy Vary Region)**  
+> 🏆 **1st Place Winner – Regional Round of the AI Olympiad 2026 (Karlovy Vary Region)**
+> 🌐 **[👉 Try Live Demo](https://znamirovsky.github.io/eduai-navigator/)**
 > **Team:** Dva a ten Jeden  
 > **Development Time Limit:** 4 hours  
 > **Development Methodology:** Vibe coding with **Gemini 3.5**
