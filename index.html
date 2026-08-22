@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduAI Navigator - Live Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --accent-lime: #deff9a;
+            --text-light: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --success-green: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Urbanist', sans-serif;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--accent-lime);
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        header h1 span {
+            color: var(--accent-lime);
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .meta-info {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--accent-lime);
+            opacity: 0.8;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            color: var(--accent-lime);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dataset-status {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+
+        .slider-group {
+            margin-bottom: 22px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .slider-label .val {
+            color: var(--accent-lime);
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent-lime);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .btn-calc {
+            width: 100%;
+            background-color: var(--accent-lime);
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-calc:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(222, 255, 154, 0.3);
+        }
+
+        .top-results {
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background-color: #111b2e;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            transition: border-color 0.3s;
+        }
+
+        .result-card:first-child {
+            border-color: var(--success-green);
+        }
+
+        .badge-rank {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: var(--accent-lime);
+            color: #000;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .result-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            padding-right: 60px;
+        }
+
+        .result-card h3 span {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+
+        .card-stats div span {
+            color: var(--text-muted);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .final-score-badge {
+            background-color: rgba(34, 197, 94, 0.15);
+            color: var(--success-green);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(255,255,255,0.03);
+            color: var(--accent-lime);
+            font-weight: 600;
+        }
+
+        tr:hover td {
+            background-color: rgba(255,255,255,0.02);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>EduAI <span>Navigator</span></h1>
+        <p>Inteligentní propojování talentů s budoucností Karlovarského kraje</p>
+        <div class="meta-info">
+            <i class="fa-solid fa-code"></i> Live Demo pro krajské kolo 2026 | Tým: Dva a ten Jeden
+        </div>
+    </header>
+
+    <div class="grid-layout">
+        <div class="panel">
+            <h2><i class="fa-solid fa-file-excel"></i> Zdroj dat (Excel)</h2>
+            <div class="dataset-status" id="status-box">
+                <i class="fa-solid fa-spinner fa-spin" style="color: var(--accent-lime);"></i> Načítám tabulku ze souboru `dataset.xlsx`...
+            </div>
+
+            <h2><i class="fa-solid fa-user-graduate"></i> 1. Profil studenta</h2>
+            
+            <div class="slider-group">
+                <div class="slider-label"><span>🔧 Zájem o techniku:</span> <span class="val" id="val_tech">3</span></div>
+                <input type="range" id="slide_tech" min="1" max="5" value="3" oninput="updateVal('tech', this.value)">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>👥 Práce s lidmi:</span> <span class="val" id="val_lide">3</span></div>
+                <input type="range" id="slide_lide" min="1" max="5" value="3" oninput="updateVal('lide', this.value)">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>🔨 Práce rukama:</span> <span class="val" id="val_ruka">3</span></div>
+                <input type="range" id="slide_ruka" min="1" max="5" value="3" oninput="updateVal('ruka', this.value)">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>💻 Práce s počítačem:</span> <span class="val" id="val_pc">3</span></div>
+                <input type="range" id="slide_pc" min="1" max="5" value="3" oninput="updateVal('pc', this.value)">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>🎨 Kreativita:</span> <span class="val" id="val_krea">3</span></div>
+                <input type="range" id="slide_krea" min="1" max="5" value="3" oninput="updateVal('krea', this.value)">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>📚 Teorie vs Praxe (100 = čistá teorie):</span> <span class="val" id="val_teorie">50%</span></div>
+                <input type="range" id="slide_teorie" min="0" max="100" step="5" value="50" oninput="updateVal('teorie', this.value)">
+            </div>
+
+            <h2 style="margin-top: 35px;"><i class="fa-solid fa-sliders"></i> 2. Strategické priority kraje</h2>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>📈 Váha poptávky firem:</span> <span class="val" id="val_vpoptavky">1.0</span></div>
+                <input type="range" id="slide_vpoptavky" min="0" max="2" step="0.1" value="1" oninput="updateVal('vpoptavky', this.value)">
+            </div>
+
+            <div class="slider-group">
+                <div class="slider-label"><span>🛑 Váha rizika odlivu:</span> <span class="val" id="val_vodlivu">1.0</span></div>
+                <input type="range" id="slide_vodlivu" min="0" max="2" step="0.1" value="1" oninput="updateVal('vodlivu', this.value)">
+            </div>
+
+            <button class="btn-calc" id="btn-submit" onclick="calculateAI()" disabled><i class="fa-solid fa-bolt"></i> Spustit AI doporučení</button>
+        </div>
+
+        <div class="panel" style="background-color: rgba(30, 41, 59, 0.5);">
+            <h2><i class="fa-solid fa-square-poll-vertical"></i> Výsledky analýzy</h2>
+            <div id="results-target">
+                <p style="color: var(--text-muted); text-align: center; padding-top: 50px;">Čekám na načtení zdrojového Excelu...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let datasetOboru = [];
+
+    // AUTOMATICKÉ NAČTENÍ EXCELU
+    window.addEventListener('DOMContentLoaded', () => {
+        fetch('dataset.xlsx')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Soubor dataset.xlsx nebyl nalezen ve složce.');
+                }
+                return response.arrayBuffer();
+            })
+            .then(buffer => {
+                const data = new Uint8Array(buffer);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Načtení prvního listu (List 1)
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (jsonData && jsonData.length > 0) {
+                    // PŘEMAPOVÁNÍ TVÝCH SKUTEČNÝCH NÁZVŮ SLOUPCŮ Z EXCELU
+                    datasetOboru = jsonData.map(row => {
+                        return {
+                            id: row.obor_id,
+                            nazev: row.nazev_oboru,
+                            kod: row.kod_oboru,
+                            skoly: parseFloat(row.pocet_skol_v_kraji) || 0,
+                            tech: parseFloat(row.zajem_technika) || 0,
+                            lide: parseFloat(row.zajem_lide) || 0,
+                            ruky: parseFloat(row.prace_rukama) || 0,
+                            comp: parseFloat(row.prace_s_pocitacem) || 0,
+                            krea: parseFloat(row.kreativita) || 0,
+                            teorie: parseFloat(row.teorie_vs_praxe) || 0,
+                            poptavka: parseFloat(row.poptavka_v_kraji_1_5) || 0,
+                            odliv: parseFloat(row.riziko_odlivu_1_5) || 0,
+                            // Extra statistiky pro vizualizaci z tvého Excelu
+                            mzda: row.nastupni_mzda_kc ? parseFloat(row.nastupni_mzda_kc).toLocaleString('cs-CZ') + ' Kč' : 'Neuvedena',
+                            uplatnitelnost: row.uplatnitelnost_v_kraji_procent ? parseFloat(row.uplatnitelnost_v_kraji_procent).toFixed(1) + ' %' : '—',
+                            mesto: row.vyucuje_se_v || 'Neznámé'
+                        };
+                    });
+                    
+                    document.getElementById('status-box').innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--success-green)"></i> Načteno <b>${datasetOboru.length} oborů</b> z Excelu (\`dataset.xlsx\`).`;
+                    document.getElementById('btn-submit').disabled = false;
+                    document.getElementById('results-target').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding-top: 50px;">Nastavte hodnoty a klikněte na tlačítko "Spustit AI doporučení".</p>';
+                } else {
+                    throw new Error('První list v Excelu neobsahuje data.');
+                }
+            })
+            .catch(error => {
+                document.getElementById('status-box').innerHTML = `<i class="fa-solid fa-circle-xmark" style="color:#ef4444"></i> Chyba: ${error.message}`;
+                console.error(error);
+            });
+    });
+
+    function updateVal(type, val) {
+        if(type === 'teorie') {
+            document.getElementById('val_' + type).innerText = val + '%';
+        } else if (type === 'vpoptavky' || type === 'vodlivu') {
+            document.getElementById('val_' + type).innerText = parseFloat(val).toFixed(1);
+        } else {
+            document.getElementById('val_' + type).innerText = val;
+        }
+    }
+
+    function calculateAI() {
+        if (!datasetOboru || datasetOboru.length === 0) return;
+
+        const uTech = parseFloat(document.getElementById('slide_tech').value);
+        const uLide = parseFloat(document.getElementById('slide_lide').value);
+        const uRuka = parseFloat(document.getElementById('slide_ruka').value);
+        const uPc = parseFloat(document.getElementById('slide_pc').value);
+        const uKrea = parseFloat(document.getElementById('slide_krea').value);
+        const uTeorie = parseFloat(document.getElementById('slide_teorie').value);
+
+        const wPoptavka = parseFloat(document.getElementById('slide_vpoptavky').value);
+        const wOdliv = parseFloat(document.getElementById('slide_vodlivu').value);
+
+        // Uživatelská teorie z 0-100 na 1-5
+        const uTeorieNorm = (uTeorie / 100) * 4 + 1;
+
+        const teorieValues = datasetOboru.map(o => o.teorie);
+        const minTeorie = Math.min(...teorieValues);
+        const maxTeorie = Math.max(...teorieValues);
+
+        let processedObory = datasetOboru.map(obor => {
+            // Normalizace teorie v datasetu na škálu 1-5
+            let oTeorieNorm = minTeorie === maxTeorie ? 3 : 1 + ((obor.teorie - minTeorie) / (maxTeorie - minTeorie)) * 4;
+
+            // Euklidovská vzdálenost (6D prostor)
+            let dist = Math.sqrt(
+                Math.pow(uTech - obor.tech, 2) +
+                Math.pow(uLide - obor.lide, 2) +
+                Math.pow(uRuka - obor.ruky, 2) + 
+                Math.pow(uPc - obor.comp, 2) +    
+                Math.pow(uKrea - obor.krea, 2) +
+                Math.pow(uTeorieNorm - oTeorieNorm, 2)
+            );
+            return { ...obor, dist: dist };
+        });
+
+        const maxDist = Math.max(...processedObory.map(o => o.dist)) || 1;
+        processedObory = processedObory.map(o => {
+            let shoda_personal = 100 * (1 - (o.dist / maxDist));
+            
+            // Škálování sub-skóre z 1-5 na 0-1
+            let poptavka_score = (o.poptavka - 1) / 4;
+            let odliv_score = 1 - ((o.odliv - 1) / 4); // Invertované skóre rizika odlivu
+
+            // Výpočet celkového komplexního skóre
+            let final_score = (shoda_personal * 0.6) + (poptavka_score * 20 * wPoptavka) + (odliv_score * 20 * wOdliv);
+
+            return {
+                ...o,
+                shoda_personal: shoda_personal,
+                final_score: final_score
+            };
+        });
+
+        processedObory.sort((a, b) => b.final_score - a.final_score);
+
+        // HTML Generování TOP 3
+        let htmlOutput = `<h3>🎯 TOP 3 Doporučené obory:</h3><div class="top-results">`;
+        
+        for (let i = 0; i < Math.min(3, processedObory.length); i++) {
+            let item = processedObory[i];
+            htmlOutput += `
+                <div class="result-card">
+                    <span class="badge-rank">TOP ${i+1}</span>
+                    <h3>${item.nazev} <br><span>(Kód: ${item.kod || '—'})</span></h3>
+                    <div class="card-stats">
+                        <div><span>🧩 Osobní shoda:</span> <b>${item.shoda_personal.toFixed(1)} %</b></div>
+                        <div><span>🏢 Poptávka firem:</span> <b>${item.poptavka.toFixed(1)}/5</b></div>
+                        <div><span>📍 Město výuky:</span> <b>${item.mesto}</b></div>
+                        <div><span>🏫 Škol v kraji:</span> <b>${item.skoly}</b></div>
+                        <div><span>💰 Nástupní mzda:</span> <b>${item.mzda}</b></div>
+                        <div><span>📈 Uplatnitelnost:</span> <b>${item.uplatnitelnost}</b></div>
+                    </div>
+                    <div class="score-row">
+                        <span style="font-size:0.85rem; color:var(--text-muted)">Komplexní kritérium AI</span>
+                        <span class="final-score-badge">Celkové skóre: ${item.final_score.toFixed(1)}</span>
+                    </div>
+                </div>
+            `;
+        }
+        htmlOutput += `</div>`;
+
+        // Celková srovnávací tabulka
+        htmlOutput += `
+            <h3 style="margin-top:30px;">📊 Kompletní žebříček oborů</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Název oboru</th>
+                            <th>Osobní shoda</th>
+                            <th>Poptávka</th>
+                            <th>Mzda</th>
+                            <th>Finální skóre</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        processedObory.forEach(o => {
+            htmlOutput += `
+                <tr>
+                    <td><b>${o.nazev}</b><br><span style="font-size:0.8rem; color:var(--text-muted)">${o.kod || '—'} | ${o.mesto}</span></td>
+                    <td>${o.shoda_personal.toFixed(1)} %</td>
+                    <td>${o.poptavka.toFixed(1)}/5</td>
+                    <td>${o.mzda}</td>
+                    <td style="color:var(--accent-lime); font-weight:700;">${o.final_score.toFixed(1)}</td>
+                </tr>
+            `;
+        });
+
+        htmlOutput += `</tbody></table></div>`;
+        document.getElementById('results-target').innerHTML = htmlOutput;
+    }
+</script>
+
+</body>
+</html>
