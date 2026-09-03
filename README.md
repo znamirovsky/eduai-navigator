@@ -90,5 +90,5 @@ Make sure `index.html` and `dataset.xlsx` are in the same directory.
 Developed by team **Dva a ten Jeden** during the AI Olympiad 2026:
 
 * **[Aaron Znamirovský](https://github.com/znamirovsky)** – Lead Developer, Architecture & Integration
-* **Jan Šimurda** – AI Ethics & Impact Analysis
+* **Honza Šimurda** – AI Ethics & Impact Analysis
 * **[Tomáš Stehlík](https://github.com/TomioStehlik)** – Presentation & Pitch Strategy
